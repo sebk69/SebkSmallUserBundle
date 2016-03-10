@@ -1,0 +1,4 @@
+services:
+    sebk_small_users_provider:
+        class: Sebk\SmallUserBundle\Security\UserProvider
+        arguments: [@sebk_small_orm_dao, @sebk_small_orm_validator, @security.encoder_factory]
