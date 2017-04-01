@@ -16,7 +16,7 @@ class UserRole extends AbstractDao
         $this->setDbTableName("user_role");
         $this->setModelName("UserRole");
         $this->addPrimaryKey("id_user", "idUser");
-        $this->addField("role", "role");
+        $this->addPrimaryKey("role", "role");
         $this->addToOne("user", array("idUser" => "id"), "User");
     }
 }

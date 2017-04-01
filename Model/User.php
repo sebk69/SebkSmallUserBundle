@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is a part of SebkSmallUserBundle
- * Copyright 2015 - Sébastien Kus
+ * Copyright 2015-2017 - Sébastien Kus
  * Under GNU GPL V3 licence
  */
 
@@ -11,6 +11,7 @@ use Sebk\SmallOrmBundle\Dao\ModelException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Sebk\SmallOrmBundle\Dao\Model;
+use Symfony\Component\Validator\Constraints\DateTime;
 
 class User extends Model implements UserInterface, EquatableInterface
 {
@@ -19,6 +20,8 @@ class User extends Model implements UserInterface, EquatableInterface
      */
     public function onLoad() {
         $this->loadToMany("roles", array());
+        $this->setCreatedAt((new DateTime())->createFromFormat("Y-m-d H:i:s"), $this->getCreatedAt());
+        $this->setUpdatedAt((new DateTime())->createFromFormat("Y-m-d H:i:s"), $this->getUpdatedAt());
     }
 
     public function beforeSave()
@@ -32,10 +35,8 @@ class User extends Model implements UserInterface, EquatableInterface
             $this->setSalt(Model::FIELD_NOT_PERIST);
         }
 
-        if ($this->getCreatedAt() === null) {
-            $this->setCreatedAt(new \DateTime);
-        }
-        $this->setUpdatedAt(new \DateTime);
+        $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
+        $this->setUpdatedAt(date("Y-m-d H:i:s"));
     }
 
     /**
