@@ -20,7 +20,7 @@ use Sebk\SmallUserBundle\Model\User;
 
 class UserProvider implements UserProviderInterface {
 
-    protected $userDao;
+    protected $daoFactory;
     protected $validatorFactory;
     protected $encoderFactory;
 
@@ -28,9 +28,18 @@ class UserProvider implements UserProviderInterface {
      * @param Dao $daoFactory
      */
     public function __construct(Dao $daoFactory, Validator $validatorFactory, EncoderFactoryInterface $encoderFactory) {
-        $this->userDao = $daoFactory->get("SebkSmallUserBundle", "User");
+        $this->daoFactory = $daoFactory;
         $this->validatorFactory = $validatorFactory;
         $this->encoderFactory = $encoderFactory;
+    }
+
+    /**
+     * Return the user dao
+     * @return mixed
+     */
+    public function getUserDao()
+    {
+        return $this->daoFactory->get("SebkSmallUserBundle", "User");
     }
 
     /**
@@ -41,10 +50,10 @@ class UserProvider implements UserProviderInterface {
      */
     public function loadUserByUsername($username) {
         try {
-            $user = $this->userDao->findOneBy(array("email" => $username));
+            $user = $this->getUserDao()->findOneBy(array("email" => $username));
         } catch (DaoException $e) {
             try {
-                $user = $this->userDao->findOneBy(array("nickname" => $username));
+                $user = $this->getUserDao()->findOneBy(array("nickname" => $username));
             } catch (DaoException $e) {
                 throw new UsernameNotFoundException("Username $username does not exist.");
             }
@@ -77,7 +86,7 @@ class UserProvider implements UserProviderInterface {
      * @return User
      */
     public function createUser($email, $nickname, $plainPassword) {
-        $user = $this->userDao->newModel();
+        $user = $this->getUserDao()->newModel();
 
         $user->setEncoder($this->encoderFactory->getEncoder($user));
         $user->setPasswordToEncode($plainPassword);
