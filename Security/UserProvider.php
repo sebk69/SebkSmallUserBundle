@@ -96,7 +96,7 @@ class UserProvider implements UserProviderInterface {
 
         $userValidator = $this->validatorFactory->get($user);
         if ($userValidator->validate()) {
-            $this->userDao->persist($user);
+            $this->getUserDao()->persist($user);
         } else {
             throw new \Exception($userValidator->getMessage());
         }
@@ -124,7 +124,7 @@ class UserProvider implements UserProviderInterface {
         // validate and persist
         $validator = $this->validatorFactory->get($user);
         if ($validator->validate()) {
-            $this->userDao->persist($user);
+            $this->getUserDao()->persist($user);
         } else {
             throw new \Exception($validator->getMessage());
         }

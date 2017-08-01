@@ -20,8 +20,6 @@ class User extends Model implements UserInterface, EquatableInterface
      */
     public function onLoad() {
         $this->loadToMany("roles", array());
-        $this->setCreatedAt((new DateTime())->createFromFormat("Y-m-d H:i:s"), $this->getCreatedAt());
-        $this->setUpdatedAt((new DateTime())->createFromFormat("Y-m-d H:i:s"), $this->getUpdatedAt());
     }
 
     public function beforeSave()
@@ -31,11 +29,10 @@ class User extends Model implements UserInterface, EquatableInterface
                 $this->setPassword($encoder->encodePassword($plainPassword, $this->getSalt()));
             }
         } catch (\Exception $e) {
-            $this->setPassword(Model::FIELD_NOT_PERIST);
-            $this->setSalt(Model::FIELD_NOT_PERIST);
+            $this->setPassword(Model::FIELD_NOT_PERSIST);
+            $this->setSalt(Model::FIELD_NOT_PERSIST);
         }
 
-        $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
         $this->setUpdatedAt(date("Y-m-d H:i:s"));
     }
 

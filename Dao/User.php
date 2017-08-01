@@ -22,7 +22,7 @@ class User extends AbstractDao
         $this->addField("nickname", "nickname");
         $this->addField("salt", "salt");
         $this->addField("enabled", "enabled", 0);
-        $this->addField("created_at", "createdAt", new \DateTime());
+        $this->addField("created_at", "createdAt", (new \DateTime())->format("Y-m-d H:i:s"));
         $this->addField("updated_at", "updatedAt", null);
         $this->addToMany("roles", array("id" => "idUser"), "UserRole");
     }

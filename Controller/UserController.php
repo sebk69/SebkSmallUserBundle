@@ -65,14 +65,20 @@ class UserController extends Controller {
             }
         }
 
-        $this->get("sebk_small_users_provider")->updateUser(
-                $this->get('security.token_storage')->getToken()->getUser(), 
-                $newUser->getEmail(), 
-                $newUser->getNickname(), 
+        try {
+            $this->get("sebk_small_users_provider")->updateUser(
+                $this->get('security.token_storage')->getToken()->getUser(),
+                $newUser->getEmail(),
+                $newUser->getNickname(),
                 $passwordToEncode
-        );
+            );
+        } catch (\Exception $e) {
+            return new Response(json_encode($e->getMessage()), 400);
+        }
 
-        return new Response(json_encode($newUser), 200);
+        $this->get('security.token_storage')->getToken()->getUser()->eraseCredentials();
+
+        return new Response(json_encode($this->get('security.token_storage')->getToken()->getUser()), 200);
     }
 
     /**
