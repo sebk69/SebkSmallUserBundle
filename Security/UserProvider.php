@@ -8,6 +8,7 @@
 
 namespace Sebk\SmallUserBundle\Security;
 
+use Sebk\SmallOrmBundle\Dao\DaoEmptyException;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
@@ -51,10 +52,10 @@ class UserProvider implements UserProviderInterface {
     public function loadUserByUsername($username) {
         try {
             $user = $this->getUserDao()->findOneBy(array("email" => $username));
-        } catch (DaoException $e) {
+        } catch (DaoEmptyException $e) {
             try {
                 $user = $this->getUserDao()->findOneBy(array("nickname" => $username));
-            } catch (DaoException $e) {
+            } catch (DaoEmptyException $e) {
                 throw new UsernameNotFoundException("Username $username does not exist.");
             }
         }
