@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is a part of SebkSmallUserBundle
- * Copyright 2015-2017 - Sébastien Kus
+ * Copyright 2015-2018 - Sébastien Kus
  * Under GNU GPL V3 licence
  */
 
@@ -12,60 +12,56 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
 use Sebk\SmallOrmBundle\Dao\Model;
 use Symfony\Component\Validator\Constraints\DateTime;
+use Sebk\SmallUserBundle\Security\User as SecurityTokenUser;
 
-class User extends Model implements UserInterface, EquatableInterface
+class User extends Model
 {
     /**
-     * @throws \Sebk\SmallOrmBundle\Dao\DaoException
+     * Action after loading model
      */
-    public function onLoad() {
-        $this->loadToMany("roles", array());
+    public function onLoad(): void
+    {
+        // Convert database to model fields types
+        $this->setRoles(json_decode($this->getRoles()));
+        $this->setEnabled($this->getEnabled() == 1);
+        $this->setCreatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getCreatedAt()));
+        $this->setUpdatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getUpdatedAt()));
     }
 
-    public function beforeSave()
+    /**
+     * Action before saving model
+     */
+    public function beforeSave(): void
     {
-        try {
-            if (($encoder = $this->getEncoder()) && ($plainPassword = $this->getPasswordToEncode())) {
-                $this->setPassword($encoder->encodePassword($plainPassword, $this->getSalt()));
-            }
-        } catch (\Exception $e) {
-            $this->setPassword(Model::FIELD_NOT_PERSIST);
-            $this->setSalt(Model::FIELD_NOT_PERSIST);
+        // Convert model to database fields types
+        $this->setRoles(json_encode($this->getRoles()));
+        $this->setEnabled($this->getEnabled() ? 1 : 0);
+        if($this->getCreatedAt() === null) {
+            $this->setCreatedAt(new \DateTime);
         }
-
+        $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
         $this->setUpdatedAt(date("Y-m-d H:i:s"));
     }
 
     /**
-     * @return array
+     * Action after saving model
      */
-    public function getRoles()
+    public function afterSave(): void
     {
-        $rolesArray = array();
-        foreach (parent::getRoles() as $role) {
-            $rolesArray[] = $role->getRole();
-        }
-
-        return $rolesArray;
-    }
-
-    public function setRoles($roles) {
-        if($roles === null) {
-            parent::setRoles(null);
-        } elseif(count($roles) == 0) {
-            parent::setRoles(array());
-        } elseif($roles[0] instanceof UserRole) {
-            parent::setRoles($roles);
-        } else {
-            // TODO: manage array roles
-        }
+        // Convert database to model fields types
+        $this->setRoles(json_decode($this->getRoles()));
+        $this->setEnabled($this->getEnabled() == 1);
+        $this->setCreatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getCreatedAt()));
+        $this->setUpdatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getUpdatedAt()));
     }
 
     /**
+     * Check if user has role
      * @param $role
      * @return bool
      */
-    public function hasRole($role) {
+    public function hasRole(string $role): bool
+    {
         foreach($this->getRoles() as $userRole) {
             if($role == $userRole) {
                 return true;
@@ -76,57 +72,21 @@ class User extends Model implements UserInterface, EquatableInterface
     }
 
     /**
-     * @return string
+     * Set user from security token user
+     * @param SecurityTokenUser $securityTokenUser
+     * @return User
      */
-    public function getUsername()
+    public function setFromSecurityTokenUser(SecurityTokenUser $securityTokenUser): User
     {
-        return $this->getEmail();
-    }
+        $this->setEmail($securityTokenUser->getEmail());
+        $this->setPassword($securityTokenUser->getPassword());
+        $this->setSalt($securityTokenUser->getSalt());
+        $this->setNickname($securityTokenUser->getNickname());
+        $this->setEnabled($securityTokenUser->getEnabled());
+        $this->setCreatedAt($securityTokenUser->getCreatedAt());
+        $this->setUpdatedAt($securityTokenUser->getUpdatedAt());
+        $this->setRoles($securityTokenUser->getRoles());
 
-    /**
-     * @return string
-     */
-    public function getPassword()
-    {
-        return parent::getPassword();
-    }
-
-    /**
-     * @return string
-     */
-    public function getSalt()
-    {
-        return parent::getSalt();
-    }
-
-    public function eraseCredentials()
-    {
-        $this->setPassword("");
-        $this->setSalt("");
-    }
-
-    /**
-     * @param UserInterface $user
-     * @return bool
-     */
-    public function isEqualTo(UserInterface $user)
-    {
-        if (!$user instanceof User) {
-            return false;
-        }
-
-        if ($this->getPassword() != $user->getPassword()) {
-            return false;
-        }
-
-        if ($this->getSalt() != $user->getSalt()) {
-            return false;
-        }
-
-        if ($this->getUsername() != $user->getUsername()) {
-            return false;
-        }
-
-        return true;
+        return $this;
     }
 }

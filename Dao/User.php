@@ -24,41 +24,6 @@ class User extends AbstractDao
         $this->addField("enabled", "enabled", 0);
         $this->addField("created_at", "createdAt", (new \DateTime())->format("Y-m-d H:i:s"));
         $this->addField("updated_at", "updatedAt", null);
-        $this->addToMany("roles", array("id" => "idUser"), "UserRole");
-    }
-
-    /**
-     * @return QueryBuilder
-     */
-    public function baseQuery() {
-        $query = $this->createQueryBuilder("user");
-
-        $query->where()
-            ->firstCondition(1, "=", 1);
-
-        return $query;
-    }
-
-    /**
-     * @param $get
-     * @param QueryBuilder|null $query
-     * @throws \Sebk\SmallOrmBundle\QueryBuilder\QueryBuilderException
-     */
-    public function digestGet($get, QueryBuilder $query = null) {
-        if($query === null) {
-            $query = $this->baseQuery();
-        }
-
-        foreach($get as $key => $param) {
-            switch($key) {
-                case "role":
-                    $query->innerJoin("user", "roles");
-                    $query->getWhere()
-                        ->andCondition($query->getFieldForCondition("role", "roles"), "=", $param);
-                    break;
-            }
-        }
-
-        return $query;
+        $this->addField("roles", "roles", json_encode([]));
     }
 }

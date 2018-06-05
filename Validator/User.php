@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is a part of SebkSmallUserBundle
- * Copyright 2015 - Sébastien Kus
+ * Copyright 2015-2018 - Sébastien Kus
  * Under GNU GPL V3 licence
  */
 
@@ -14,6 +14,7 @@ class User extends AbstractValidator
 {
 
     /**
+     * Validate model user
      * @return boolean
      */
     public function validate()
@@ -40,21 +41,6 @@ class User extends AbstractValidator
             $message .= "This nickname has been already been registered\n";
             $result = false;
         }
-        
-        /*
-        if ($this->model->getPasswordToEncode() == "" && $this->fromDb == false) {
-            $message .= "The password can't be empty\n";
-            $result = false;
-        }
-        */
-        try {
-            if (strlen($this->model->getPasswordToEncode()) < 8) {
-                $message .= "The password length can't be under 8 chars\n";
-                $result = false;
-            }
-        } catch(ModelException $e) {
-            
-        }
 
         if (filter_var($this->model->getEmail(), FILTER_VALIDATE_EMAIL) === false) {
             $message .= "Email format is not valid\n";
@@ -62,6 +48,7 @@ class User extends AbstractValidator
         }
 
         $this->message = $message;
+
         return $result;
     }
 }

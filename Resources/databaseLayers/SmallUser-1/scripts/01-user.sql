@@ -7,8 +7,8 @@ CREATE TABLE `user` (
   `enabled`    INT(1)       NOT NULL,
   `created_at` DATETIME     NOT NULL,
   `updated_at` DATETIME     NULL,
+  `roles`      VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE `email` (`email`),
   UNIQUE `nickname` (`nickname`)
-)
-  ENGINE = InnoDB;
+) ENGINE = InnoDB;

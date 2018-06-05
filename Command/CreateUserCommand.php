@@ -43,12 +43,13 @@ class CreateUserCommand extends ContainerAwareCommand
     {
         $userProvider = $this->getContainer()->get("sebk_small_users_provider");
 
-        //try {
+        try {
             $user = $userProvider->createUser($input->getArgument("email"), $input->getArgument("nickname"), $input->getArgument("password"));
-        //} catch(\Exception $e) {
-        //    $output->writeln($e->getMessage());
-        //}
+        } catch(\Exception $e) {
+            $output->writeln($e->getMessage());
+            return;
+        }
 
-        $output->writeln("User ".$user->getNickname()." has been created");
+        $output->writeln("User ".$input->getArgument("nickname")." has been created");
     }
 }

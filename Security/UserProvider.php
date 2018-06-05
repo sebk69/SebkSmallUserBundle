@@ -2,7 +2,7 @@
 
 /**
  * This file is a part of SebkSmallUserBundle
- * Copyright 2015 - Sébastien Kus
+ * Copyright 2015-2018 - Sébastien Kus
  * Under GNU GPL V3 licence
  */
 
@@ -17,16 +17,25 @@ use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Sebk\SmallOrmBundle\Factory\Dao;
 use Sebk\SmallOrmBundle\Factory\Validator;
 use Sebk\SmallOrmBundle\Dao\DaoException;
-use Sebk\SmallUserBundle\Model\User;
+use Sebk\SmallUserBundle\Model\User as UserModel;
+use Sebk\SmallUserBundle\Dao\User as UserDao;
 
-class UserProvider implements UserProviderInterface {
+/**
+ * Class UserProvider
+ * @package Sebk\SmallUserBundle\Security
+ */
+class UserProvider implements UserProviderInterface
+{
 
     protected $daoFactory;
     protected $validatorFactory;
     protected $encoderFactory;
 
     /**
+     * UserProvider constructor.
      * @param Dao $daoFactory
+     * @param Validator $validatorFactory
+     * @param EncoderFactoryInterface $encoderFactory
      */
     public function __construct(Dao $daoFactory, Validator $validatorFactory, EncoderFactoryInterface $encoderFactory) {
         $this->daoFactory = $daoFactory;
@@ -36,27 +45,38 @@ class UserProvider implements UserProviderInterface {
 
     /**
      * Return the user dao
-     * @return mixed
+     * @return Dao
      */
-    public function getUserDao()
+    public function getUserDao(): UserDao
     {
         return $this->daoFactory->get("SebkSmallUserBundle", "User");
     }
 
     /**
-     *
+     * Load user by email or nickname
      * @param string $username
      * @return User
      * @throws UsernameNotFoundException
      */
-    public function loadUserByUsername($username) {
+    public function loadUserByUsername($username)
+    {
+        return (new User())->setFromModel($this->getModelByUsername($username));
+    }
+
+    /**
+     * Get user model by email or nickname
+     * @param string $username
+     * @return UserModel
+     */
+    public function getModelByUsername(string $username): UserModel
+    {
         try {
             $user = $this->getUserDao()->findOneBy(array("email" => $username));
         } catch (DaoEmptyException $e) {
             try {
                 $user = $this->getUserDao()->findOneBy(array("nickname" => $username));
             } catch (DaoEmptyException $e) {
-                throw new UsernameNotFoundException("Username $username does not exist.");
+                throw new UsernameNotFoundException("User $username does not exist.");
             }
         }
 
@@ -64,11 +84,22 @@ class UserProvider implements UserProviderInterface {
     }
 
     /**
-     * @param UserInterface $user
-     * @return type
-     * @throws UnsupportedUserException
+     * Get model by user
+     * @param User $user
+     * @return UserModel
      */
-    public function refreshUser(UserInterface $user) {
+    public function getModelByUser(User $user): UserModel
+    {
+        return $this->getModelByUsername($user->getUsername());
+    }
+
+    /**
+     * Refresh user
+     * @param UserInterface $user
+     * @return User
+     */
+    public function refreshUser(UserInterface $user): User
+    {
         if (!$user instanceof User) {
             throw new UnsupportedUserException("Instances of " . get_class($user) . " are not supported.");
         }
@@ -76,61 +107,71 @@ class UserProvider implements UserProviderInterface {
         return $this->loadUserByUsername($user->getUsername());
     }
 
-    public function supportsClass($class) {
-        return $class === 'Sebk\SmallUserBundle\Model\User';
+    /**
+     * Is class is supported by provider
+     * @param string $class
+     * @return bool
+     */
+    public function supportsClass($class)
+    {
+        return $class === 'Sebk\SmallUserBundle\Security\User';
     }
 
     /**
-     * @param string $email
-     * @param string $nickname
-     * @param string $plainPassword
-     * @return User
+     * Create user
+     * @param $email
+     * @param $nickname
+     * @param $plainPassword
+     * @param $enabled
+     * @return UserProvider
+     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
      */
-    public function createUser($email, $nickname, $plainPassword) {
-        $user = $this->getUserDao()->newModel();
+    public function createUser($email, $nickname, $plainPassword, $enabled = true): UserProvider
+    {
+        $user = new User;
 
-        $user->setEncoder($this->encoderFactory->getEncoder($user));
-        $user->setPasswordToEncode($plainPassword);
-        $user->setEmail($email);
-        $user->setNickname($nickname);
         $user->setSalt(md5(time()));
-
-        $userValidator = $this->validatorFactory->get($user);
-        if ($userValidator->validate()) {
-            $this->getUserDao()->persist($user);
-        } else {
-            throw new \Exception($userValidator->getMessage());
-        }
-
-        return $user;
-    }
-
-    /**
-     * @param User $user
-     * @param string $email
-     * @param string $nickname
-     * @param string $plainPassword
-     * @return \Sebk\SmallUserBundle\Security\UserProvider
-     * @throws \Exception
-     */
-    public function updateUser(User $user, $email, $nickname, $plainPassword = null) {
+        $user->setPassword($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $user->getSalt()));
         $user->setEmail($email);
         $user->setNickname($nickname);
-        if ($plainPassword !== null) {
-            $user->setEncoder($this->encoderFactory->getEncoder($user));
-            $user->setPasswordToEncode($plainPassword);
-            $user->setSalt(md5(time()));
-        }
+        $user->setEnabled($enabled);
+        $user->addRole("ROLE_USER");
 
-        // validate and persist
-        $validator = $this->validatorFactory->get($user);
-        if ($validator->validate()) {
-            $this->getUserDao()->persist($user);
+        $model = $this->daoFactory->get("SebkSmallUserBundle", "User")->newModel();
+        $model->setFromSecurityTokenUser($user);
+
+        if ($model->getValidator()->validate()) {
+            $model->persist();
         } else {
-            throw new \Exception($validator->getMessage());
+            throw new \Exception($model->getValidator()->getMessage());
         }
 
         return $this;
     }
 
+
+    /**
+     * Update user
+     * @param User $user
+     * @param string|null $plainPassword
+     * @return UserProvider
+     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
+     */
+    public function updateUser(User $user, string $plainPassword = null): UserProvider
+    {
+        $user->setPassword($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $user->getSalt()));
+
+        $model = $this->daoFactory->get("SebkSmallUserBundle", "User")->newModel();
+        $model->setFromSecurityTokenUser($user);
+
+        if ($model->getValidator()->validate()) {
+            $model->persist();
+        } else {
+            throw new \Exception($model->getValidator()->getMessage());
+        }
+
+        return $this;
+    }
 }
