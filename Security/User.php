@@ -9,15 +9,16 @@
 namespace Sebk\SmallUserBundle\Security;
 
 
+use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Sebk\SmallUserBundle\Model\User as UserModel;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Class User
  * @package Sebk\SmallUserBundle\Security
  */
-class User implements UserInterface, EquatableInterface
+class User implements AdvancedUserInterface, EquatableInterface
 {
     protected $email;
     protected $password;
@@ -300,5 +301,41 @@ class User implements UserInterface, EquatableInterface
         $this->setRoles($modelUser->getRoles());
 
         return $this;
+    }
+
+    /**
+     * Return true if user is enabled
+     * @return bool|void
+     */
+    public function isEnabled()
+    {
+        return $this->getEnabled();
+    }
+
+    /**
+     * Return true if account non expired
+     * @return bool
+     */
+    public function isAccountNonExpired()
+    {
+        return true;
+    }
+
+    /**
+     * Return true if credentials is not expired
+     * @return bool
+     */
+    public function isCredentialsNonExpired()
+    {
+        return true;
+    }
+
+    /**
+     * Return true if account is not locked
+     * @return bool
+     */
+    public function isAccountNonLocked()
+    {
+        return true;
     }
 }
