@@ -7,3 +7,18 @@ services:
     Sebk\SmallUserBundle\Command\CreateUserCommand:
         public: true
         tags: [console.command]
+    Sebk\SmallUserBundle\Command\ChangePasswordCommand:
+        public: true
+        tags: [console.command]
+    Sebk\SmallUserBundle\Command\AddRoleCommand:
+        public: true
+        tags: [console.command]
+    Sebk\SmallUserBundle\Command\RemoveRoleCommand:
+        public: true
+        tags: [console.command]
+    Sebk\SmallUserBundle\Command\EnableUserCommand:
+        public: true
+        tags: [console.command]
+    Sebk\SmallUserBundle\Command\DisableUserCommand:
+        public: true
+        tags: [console.command]
