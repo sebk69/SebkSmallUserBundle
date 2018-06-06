@@ -161,9 +161,11 @@ class UserProvider implements UserProviderInterface
      */
     public function updateUser(User $user, string $plainPassword = null): UserProvider
     {
-        $user->setPassword($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $user->getSalt()));
+        if($plainPassword !== null) {
+            $user->setPassword($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $user->getSalt()));
+        }
 
-        $model = $this->daoFactory->get("SebkSmallUserBundle", "User")->newModel();
+        $model = $this->getModelByUser($user);
         $model->setFromSecurityTokenUser($user);
 
         if ($model->getValidator()->validate()) {
