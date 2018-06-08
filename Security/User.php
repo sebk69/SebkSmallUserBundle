@@ -20,6 +20,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 class User implements AdvancedUserInterface, EquatableInterface
 {
+    protected $id;
     protected $email;
     protected $password;
     protected $nickname;
@@ -28,6 +29,15 @@ class User implements AdvancedUserInterface, EquatableInterface
     protected $createdAt;
     protected $updatedAt;
     protected $roles = [];
+
+    /**
+     * Return user id
+     * @return string
+     */
+    public function getId(): string
+    {
+        return $this->id;
+    }
 
     /**
      * Get username : alias of getEmail
@@ -291,6 +301,7 @@ class User implements AdvancedUserInterface, EquatableInterface
      */
     public function setFromModel(UserModel $modelUser): User
     {
+        $this->id = $modelUser->getId();
         $this->setEmail($modelUser->getEmail());
         $this->setPassword($modelUser->getPassword());
         $this->setSalt($modelUser->getSalt());
