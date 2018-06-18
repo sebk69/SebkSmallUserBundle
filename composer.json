@@ -1,11 +1,12 @@
 {
-    "name": "Sebk/SmallUserBundle",
-    "license": "GNU GPL V3",
+    "name": "sebk/small-user-bundle",
+    "license": "GPL-3.0-only",
     "type": "project",
     "description": "User bundle for Symfony based on SebkSmallOrmBundle",
     "autoload": {
         "psr-4": { "Sebk\\SmallUserBundle\\": "" }
     },
-    "require-dev": {
+    "require": {
+        "sebk/small-orm-bundle": "dev-symfony4"
     }
 }

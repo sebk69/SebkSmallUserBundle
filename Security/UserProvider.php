@@ -60,7 +60,15 @@ class UserProvider implements UserProviderInterface
      */
     public function loadUserByUsername($username)
     {
-        return (new User())->setFromModel($this->getModelByUsername($username));
+        // Get model from db
+        $model = $this->getModelByUsername($username);
+
+        // Create security user
+        $user = (new User())->setFromModel($model);
+        $user->setPassword($model->getPassword());
+
+        // Return it
+        return $user;
     }
 
     /**

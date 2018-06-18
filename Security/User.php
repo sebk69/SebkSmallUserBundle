@@ -303,7 +303,6 @@ class User implements AdvancedUserInterface, EquatableInterface
     {
         $this->id = $modelUser->getId();
         $this->setEmail($modelUser->getEmail());
-        $this->setPassword($modelUser->getPassword());
         $this->setSalt($modelUser->getSalt());
         $this->setNickname($modelUser->getNickname());
         $this->setEnabled($modelUser->getEnabled());
