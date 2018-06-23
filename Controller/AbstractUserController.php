@@ -89,7 +89,7 @@ abstract class AbstractUserController extends Controller
         $form = $this->createProfileForm($userModel);
 
         /** @var UserProvider $userProvider */
-        $userProvider = $this->get("sebk_small_users_provider");
+        $userProvider = $this->get("sebk_small_user_provider");
 
         // Handle request
         $form->handleRequest($request);

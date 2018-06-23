@@ -1,9 +1,14 @@
 services:
     _defaults:
         public: true
-    sebk_small_users_provider:
+    sebk_small_user_provider:
         class: Sebk\SmallUserBundle\Security\UserProvider
         arguments: ["@sebk_small_orm_dao", "@sebk_small_orm_validator", "@security.encoder_factory"]
+    Sebk\SmallUserBundle\Security\UserProvider:
+        arguments: ["@sebk_small_orm_dao", "@sebk_small_orm_validator", "@security.encoder_factory"]
+    sebk_small_user_invite:
+        class: Sebk\SmallUserBundle\Security\Invite
+        arguments: ["@swiftmailer.mailer", "%env(APP_SECRET)%"]
     Sebk\SmallUserBundle\Command\CreateUserCommand:
         public: true
         tags: [console.command]

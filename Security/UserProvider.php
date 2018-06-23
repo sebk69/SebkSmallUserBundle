@@ -72,6 +72,24 @@ class UserProvider implements UserProviderInterface
     }
 
     /**
+     * Load user by id
+     * @param $userId
+     * @return User
+     */
+    public function loadUserById($userId)
+    {
+        // Get model from db
+        $model = $this->getModelById($userId);
+
+        // Create security user
+        $user = (new User())->setFromModel($model);
+        $user->setPassword($model->getPassword());
+
+        // Return it
+        return $user;
+    }
+
+    /**
      * Get user model by email or nickname
      * @param string $username
      * @return UserModel
@@ -86,6 +104,23 @@ class UserProvider implements UserProviderInterface
             } catch (DaoEmptyException $e) {
                 throw new UsernameNotFoundException("User $username does not exist.");
             }
+        }
+
+        return $user;
+    }
+
+    /**
+     * Get user model by id
+     * @param int $userId
+     * @return UserModel
+     * @throws DaoException
+     */
+    public function getModelById(int $userId): UserModel
+    {
+        try {
+            $user = $this->getUserDao()->findOneBy(array("id" => $userId));
+        } catch (DaoEmptyException $e) {
+            throw new UsernameNotFoundException("User id $userId does not exist.");
         }
 
         return $user;

@@ -36,7 +36,7 @@ class ChangePasswordCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $userProvider = $this->getContainer()->get("sebk_small_users_provider");
+        $userProvider = $this->getContainer()->get("sebk_small_user_provider");
 
         try {
             $user = $userProvider->loadUserByUsername($input->getArgument("username"));
