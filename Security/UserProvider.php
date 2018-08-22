@@ -219,4 +219,19 @@ class UserProvider implements UserProviderInterface
 
         return $this;
     }
+
+    /**
+     * Check if password match user password
+     * @param $user
+     * @param $plainPassword
+     * @return bool
+     */
+    public function checkPassword(User $user, string $plainPassword)
+    {
+        if($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $user->getSalt()) == $user->getPassword()) {
+            return true;
+        }
+
+        return false;
+    }
 }

@@ -1,13 +1,12 @@
 <?php
 /**
- *  This file is a part of SmallKeyring
+ *  This file is a part of SebkSmallUserBundle
  *  Copyright 2018 - Sébastien Kus
  *  Under GNU GPL V3 licence
  */
 
 namespace Sebk\SmallUserBundle\Security;
 
-use App\Bundle\SmallKeyringModelBundle\Model\Password;
 use Sebk\SmallUserBundle\Security\User;
 use Sebk\SmallUserBundle\Model\User as UserModel;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
