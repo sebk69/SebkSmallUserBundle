@@ -12,7 +12,7 @@ use \Sebk\SmallOrmBundle\QueryBuilder\QueryBuilder;
 
 class User extends AbstractDao
 {
-    public function build()
+    protected function build()
     {
         $this->setDbTableName("user");
         $this->setModelName("User");
