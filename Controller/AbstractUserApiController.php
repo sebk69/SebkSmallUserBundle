@@ -14,7 +14,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Form\Form;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * Class AbstractUserApiController
@@ -46,11 +45,11 @@ abstract class AbstractUserApiController extends Controller
             return new Response("User not found", 404);
         }
 
-        //try {
+        try {
             $this->denyAccessUnlessGranted(UserVoter::READ, $user);
-        //} catch (\Exception $e) {
-        //    return new Response("Not authorized", 401);
-        //}
+        } catch (\Exception $e) {
+            return new Response("Not authorized", 401);
+        }
 
         $response = new Response(json_encode($user));
         $response->headers->set("Content-Type", "application/json");
