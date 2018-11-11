@@ -89,4 +89,25 @@ class User extends Model
 
         return $this;
     }
+
+    /**
+     * Custom json serialize to convert dates and unset password
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
+        $this->setUpdatedAt(date("Y-m-d H:i:s"));
+        $password = $this->getPassword();
+        $this->setPassword(Model::FIELD_NOT_PERSIST);
+        $salt = $this->getSalt();
+        $this->setSalt(Model::FIELD_NOT_PERSIST);
+        $result = parent::jsonSerialize();
+        $this->setCreatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getCreatedAt()));
+        $this->setUpdatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getUpdatedAt()));
+        $this->setPassword($password);
+        $this->setSalt($password);
+
+        return $result;
+    }
 }

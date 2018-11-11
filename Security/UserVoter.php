@@ -16,6 +16,7 @@ class UserVoter extends Voter
 {
     const PERSONAL_EDIT = "personal_edit";
     const CONTROL = "control";
+    const READ = "read";
 
     /**
      * Check if vote supported
@@ -25,7 +26,7 @@ class UserVoter extends Voter
      */
     protected function supports($attribute, $subject)
     {
-        if(!in_array($attribute,  [static::CONTROL, static::PERSONAL_EDIT])) {
+        if(!in_array($attribute,  [static::CONTROL, static::PERSONAL_EDIT, static::READ])) {
             return false;
         }
 
@@ -57,6 +58,16 @@ class UserVoter extends Voter
             case static::PERSONAL_EDIT:
                 if ($loggedUser->getId() == $subject->getId()) {
                     return true;
+                }
+                break;
+
+            case static::READ:
+                if ($loggedUser->hasRole("ROLE_ADMIN")) {
+                    return true;
+                } else {
+                    if ($loggedUser->getId() == $subject->getId()) {
+                        return true;
+                    }
                 }
                 break;
 

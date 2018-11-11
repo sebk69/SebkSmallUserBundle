@@ -27,3 +27,6 @@ services:
     Sebk\SmallUserBundle\Command\DisableUserCommand:
         public: true
         tags: [console.command]
+    Sebk\SmallUserBundle\Security\UserVoter:
+        public: true
+        tags: [security.voter]
