@@ -100,7 +100,6 @@ class User extends Model
         $this->setUpdatedAt(date("Y-m-d H:i:s"));
         $password = $this->getPassword();
         $this->setPassword(Model::FIELD_NOT_PERSIST);
-        $salt = $this->getSalt();
         $this->setSalt(Model::FIELD_NOT_PERSIST);
         $result = parent::jsonSerialize();
         $this->setCreatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getCreatedAt()));

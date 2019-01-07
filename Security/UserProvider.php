@@ -45,7 +45,9 @@ class UserProvider implements UserProviderInterface
 
     /**
      * Return the user dao
-     * @return Dao
+     * @return UserDao
+     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
      */
     public function getUserDao(): UserDao
     {
@@ -55,8 +57,10 @@ class UserProvider implements UserProviderInterface
     /**
      * Load user by email or nickname
      * @param string $username
-     * @return User
-     * @throws UsernameNotFoundException
+     * @return User|UserInterface
+     * @throws DaoException
+     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
      */
     public function loadUserByUsername($username)
     {
@@ -75,6 +79,9 @@ class UserProvider implements UserProviderInterface
      * Load user by id
      * @param $userId
      * @return User
+     * @throws DaoException
+     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
      */
     public function loadUserById($userId)
     {
@@ -93,6 +100,9 @@ class UserProvider implements UserProviderInterface
      * Get user model by email or nickname
      * @param string $username
      * @return UserModel
+     * @throws DaoException
+     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
      */
     public function getModelByUsername(string $username): UserModel
     {
@@ -114,6 +124,8 @@ class UserProvider implements UserProviderInterface
      * @param int $userId
      * @return UserModel
      * @throws DaoException
+     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
      */
     public function getModelById(int $userId): UserModel
     {
@@ -130,6 +142,7 @@ class UserProvider implements UserProviderInterface
      * Get model by user
      * @param User $user
      * @return UserModel
+     * @throws DaoException
      */
     public function getModelByUser(User $user): UserModel
     {
@@ -140,6 +153,7 @@ class UserProvider implements UserProviderInterface
      * Refresh user
      * @param UserInterface $user
      * @return User
+     * @throws DaoException
      */
     public function refreshUser(UserInterface $user): User
     {
@@ -199,16 +213,21 @@ class UserProvider implements UserProviderInterface
      * @param User $user
      * @param string|null $plainPassword
      * @return UserProvider
-     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
-     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
+     * @throws \Exception
      */
     public function updateUser(User $user, string $plainPassword = null): UserProvider
     {
         if($plainPassword !== null) {
-            $user->setPassword($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $user->getSalt()));
+            $userModel = $this->getModelById($user->getId());
+            // Change password
+            $user->setPassword($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $userModel->getSalt()));
+        } else {
+            // Or not persist for security
+            $user->setPassword(UserModel::FIELD_NOT_PERSIST);
+            $user->setSalt(UserModel::FIELD_NOT_PERSIST);
         }
 
-        $model = $this->getModelByUser($user);
+        $model = $this->getModelById($user->getId());
         $model->setFromSecurityTokenUser($user);
 
         if ($model->getValidator()->validate()) {
@@ -218,6 +237,21 @@ class UserProvider implements UserProviderInterface
         }
 
         return $this;
+    }
+
+    /**
+     * Update a user from model
+     * @param UserModel $model
+     * @param string|null $plainPassword
+     * @return UserProvider
+     * @throws \Exception
+     */
+    public function updateUserFromModel(UserModel $model, string $plainPassword = null): UserProvider
+    {
+        $user = new User;
+        $user->setFromModel($model);
+
+        return $this->updateUser($user, $plainPassword);
     }
 
     /**
