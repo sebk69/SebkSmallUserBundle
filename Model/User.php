@@ -39,7 +39,9 @@ class User extends Model
         if($this->getCreatedAt() === null) {
             $this->setCreatedAt(new \DateTime);
         }
-        $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
+        if($this->getCreatedAt() instanceof \DateTime) {
+            $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
+        }
         $this->setUpdatedAt(date("Y-m-d H:i:s"));
     }
 
@@ -96,8 +98,12 @@ class User extends Model
      */
     public function jsonSerialize()
     {
-        $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
-        $this->setUpdatedAt(date("Y-m-d H:i:s"));
+        if($this->getCreatedAt() instanceof \DateTime) {
+            $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
+        }
+        if($this->getUpdatedAt() instanceof \DateTime) {
+            $this->setUpdatedAt($this->getUpdatedAt()->format("Y-m-d H:i:s"));
+        }
         $password = $this->getPassword();
         $this->setPassword(Model::FIELD_NOT_PERSIST);
         $this->setSalt(Model::FIELD_NOT_PERSIST);
