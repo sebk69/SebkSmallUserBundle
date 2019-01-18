@@ -1,9 +1,4 @@
 <?php
-/**
- * This file is a part of SebkSmallUserBundle
- * Copyright 2015-2018 - Sébastien Kus
- * Under GNU GPL V3 licence
- */
 
 namespace Sebk\SmallUserBundle\Model;
 
@@ -14,6 +9,26 @@ use Sebk\SmallOrmBundle\Dao\Model;
 use Symfony\Component\Validator\Constraints\DateTime;
 use Sebk\SmallUserBundle\Security\User as SecurityTokenUser;
 
+/**
+ * @method getId()
+ * @method setId($value)
+ * @method getEmail()
+ * @method setEmail($value)
+ * @method getPassword()
+ * @method setPassword($value)
+ * @method getNickname()
+ * @method setNickname($value)
+ * @method getSalt()
+ * @method setSalt($value)
+ * @method getEnabled()
+ * @method setEnabled($value)
+ * @method getCreatedAt()
+ * @method setCreatedAt($value)
+ * @method getUpdatedAt()
+ * @method setUpdatedAt($value)
+ * @method getRoles()
+ * @method setRoles($value)
+ */
 class User extends Model
 {
     /**
