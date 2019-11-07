@@ -7,6 +7,7 @@
 
 namespace Sebk\SmallUserBundle\Command;
 
+use Sebk\SmallUserBundle\Security\UserProvider;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -36,6 +37,7 @@ class ChangePasswordCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        /** @var UserProvider $userProvider */
         $userProvider = $this->getContainer()->get("sebk_small_user_provider");
 
         try {

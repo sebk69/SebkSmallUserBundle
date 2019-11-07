@@ -56,7 +56,7 @@ class UserVoter extends Voter
                 break;
 
             case static::PERSONAL_EDIT:
-                if ($loggedUser->getId() == $subject->getId()) {
+                if ($loggedUser->getId() == $subject->getId() || $loggedUser->hasRole("ROLE_ADMIN")) {
                     return true;
                 }
                 break;

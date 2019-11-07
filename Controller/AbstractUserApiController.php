@@ -36,7 +36,7 @@ abstract class AbstractUserApiController extends Controller
      * @param Request $request
      * @return Response
      */
-    public function getUserById(?int $id, Request $request)
+    protected function getUserById(?int $id, Request $request)
     {
         try {
             if ($id === null) {
@@ -67,16 +67,13 @@ abstract class AbstractUserApiController extends Controller
      * @return Response
      * @throws \Exception
      */
-    public function putUser(UserProvider $userProvider, Request $request)
+    protected function putUser(UserProvider $userProvider, Request $request)
     {
         // Decode body
         $userStdClass = json_decode($request->getContent());
         // Security : don't persist salt and password by default
         $userStdClass->salt = User::FIELD_NOT_PERSIST;
         $userStdClass->password = User::FIELD_NOT_PERSIST;
-        // Convert dates to DateTime
-        $userStdClass->createdAt = \DateTime::createFromFormat("Y-m-d H:i:s", $userStdClass->createdAt);
-        $userStdClass->updatedAt = \DateTime::createFromFormat("Y-m-d H:i:s", $userStdClass->updatedAt);
         // Create model
         $userModel = $this->getUserDao()->makeModelFromStdClass($userStdClass);
 
@@ -108,7 +105,7 @@ abstract class AbstractUserApiController extends Controller
      * @param Request $request
      * @return Response
      */
-    public function checkPassword(UserProvider $userProvider, Request $request)
+    protected function checkPassword(UserProvider $userProvider, Request $request)
     {
         // decode body
         $password = json_decode($request->getContent())->password;
@@ -121,5 +118,60 @@ abstract class AbstractUserApiController extends Controller
             // wrong password
             return new Response("", Response::HTTP_UNAUTHORIZED);
         }
+    }
+
+    /**
+     * List users
+     * @param Request $request
+     * @return Response
+     */
+    protected function listUsers(Request $request) {
+        // Get users
+        $users = $this->getUserDao()->findBy([]);
+
+        // Hide not allowed users
+        foreach ($users as $i => $user) {
+            try {
+                $this->denyAccessUnlessGranted(UserVoter::READ, $user);
+            } catch (\Exception $e) {
+                unset($users[$i]);
+            }
+        }
+
+        // Return response
+        return new Response(json_encode(array_values($users)));
+    }
+
+    /**
+     * Create a user
+     * @param UserProvider $userProvider
+     * @param Request $request
+     * @return Response
+     * @throws \Sebk\SmallOrmBundle\Dao\DaoException
+     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
+     */
+    protected function createUser(UserProvider $userProvider, Request $request) {
+        // Check rigths
+        /** @var User $myUser */
+        $myUser = $this->getUser();
+        if(!$myUser->hasRole("ROLE_ADMIN")) {
+            return new Response("Access denied", 400);
+        }
+
+        // Get data
+        $data = json_decode($request->getContent(), true);
+
+        // Create user
+        try {
+            $userProvider->createUser($data["email"], $data["nickname"], $data["password"]);
+        } catch (\Exception $e) {
+            return new Response($e->getMessage(), 400);
+        }
+
+        // Return created user
+        $user = $userProvider->getModelByUsername($data["nickname"]);
+
+        return new Response(json_encode($user));
     }
 }

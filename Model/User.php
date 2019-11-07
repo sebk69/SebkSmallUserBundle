@@ -38,9 +38,6 @@ class User extends Model
     {
         // Convert database to model fields types
         $this->setRoles(json_decode($this->getRoles()));
-        $this->setEnabled($this->getEnabled() == 1);
-        $this->setCreatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getCreatedAt()));
-        $this->setUpdatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getUpdatedAt()));
     }
 
     /**
@@ -50,14 +47,10 @@ class User extends Model
     {
         // Convert model to database fields types
         $this->setRoles(json_encode($this->getRoles()));
-        $this->setEnabled($this->getEnabled() ? 1 : 0);
         if($this->getCreatedAt() === null) {
             $this->setCreatedAt(new \DateTime);
         }
-        if($this->getCreatedAt() instanceof \DateTime) {
-            $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
-        }
-        $this->setUpdatedAt(date("Y-m-d H:i:s"));
+        $this->setUpdatedAt(new \DateTime);
     }
 
     /**
@@ -67,9 +60,6 @@ class User extends Model
     {
         // Convert database to model fields types
         $this->setRoles(json_decode($this->getRoles()));
-        $this->setEnabled($this->getEnabled() == 1);
-        $this->setCreatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getCreatedAt()));
-        $this->setUpdatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getUpdatedAt()));
     }
 
     /**
@@ -113,18 +103,10 @@ class User extends Model
      */
     public function jsonSerialize()
     {
-        if($this->getCreatedAt() instanceof \DateTime) {
-            $this->setCreatedAt($this->getCreatedAt()->format("Y-m-d H:i:s"));
-        }
-        if($this->getUpdatedAt() instanceof \DateTime) {
-            $this->setUpdatedAt($this->getUpdatedAt()->format("Y-m-d H:i:s"));
-        }
         $password = $this->getPassword();
         $this->setPassword(Model::FIELD_NOT_PERSIST);
         $this->setSalt(Model::FIELD_NOT_PERSIST);
         $result = parent::jsonSerialize();
-        $this->setCreatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getCreatedAt()));
-        $this->setUpdatedAt(\DateTime::createFromFormat("Y-m-d H:i:s", $this->getUpdatedAt()));
         $this->setPassword($password);
         $this->setSalt($password);
 
