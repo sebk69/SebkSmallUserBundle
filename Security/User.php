@@ -18,7 +18,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  * Class User
  * @package Sebk\SmallUserBundle\Security
  */
-class User implements AdvancedUserInterface, EquatableInterface
+class User implements UserInterface, EquatableInterface
 {
     protected $id;
     protected $email;

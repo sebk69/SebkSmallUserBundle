@@ -60,9 +60,11 @@ class CreateUserCommand extends Command
             $user = $userProvider->createUser($input->getArgument("email"), $input->getArgument("nickname"), $input->getArgument("password"));
         } catch(\Exception $e) {
             $output->writeln($e->getMessage());
-            return;
+            return 0;
         }
 
         $output->writeln("User ".$input->getArgument("nickname")." has been created");
+
+        return 0;
     }
 }

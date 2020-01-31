@@ -61,5 +61,7 @@ class AddRoleCommand extends Command
         }
 
         $output->writeln("User ".$input->getArgument("username")." has been updated");
+
+        return 0;
     }
 }

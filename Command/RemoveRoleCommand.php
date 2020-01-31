@@ -58,9 +58,11 @@ class RemoveRoleCommand extends Command
             $userProvider->updateUser($user);
         } catch(\Exception $e) {
             $output->writeln($e->getMessage());
-            return;
+            return 1;
         }
 
         $output->writeln("User ".$input->getArgument("username")." has been updated");
+
+        return 0;
     }
 }

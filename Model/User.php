@@ -2,6 +2,7 @@
 
 namespace Sebk\SmallUserBundle\Model;
 
+use phpDocumentor\Reflection\Types\Void_;
 use Sebk\SmallOrmBundle\Dao\ModelException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\EquatableInterface;
@@ -14,11 +15,9 @@ use Sebk\SmallUserBundle\Security\User as SecurityTokenUser;
  * @method setId($value)
  * @method getEmail()
  * @method setEmail($value)
- * @method getPassword()
  * @method setPassword($value)
  * @method getNickname()
  * @method setNickname($value)
- * @method getSalt()
  * @method setSalt($value)
  * @method getEnabled()
  * @method setEnabled($value)
@@ -26,10 +25,9 @@ use Sebk\SmallUserBundle\Security\User as SecurityTokenUser;
  * @method setCreatedAt($value)
  * @method getUpdatedAt()
  * @method setUpdatedAt($value)
- * @method getRoles()
  * @method setRoles($value)
  */
-class User extends Model
+class User extends Model implements UserInterface
 {
     /**
      * Action after loading model
@@ -97,11 +95,37 @@ class User extends Model
         return $this;
     }
 
+    public function getRoles()
+    {
+        return parent::getRoles();
+    }
+
+    public function getPassword(): string
+    {
+        return parent::getPassword();
+    }
+
+    public function getSalt(): string
+    {
+        return parent::getSalt();
+    }
+
+    public function getUsername(): string
+    {
+        return parent::getNickname();
+    }
+
+    public function eraseCredentials(): void
+    {
+        $this->setPassword("");
+        $this->setSalt("");
+    }
+
     /**
      * Custom json serialize to convert dates and unset password
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $password = $this->getPassword();
         $this->setPassword(Model::FIELD_NOT_PERSIST);
