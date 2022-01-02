@@ -7,6 +7,6 @@
         "psr-4": { "Sebk\\SmallUserBundle\\": "" }
     },
     "require": {
-        "sebk/small-orm-bundle": "dev-symfony4"
+        "sebk/small-orm-bundle": ">=2.4"
     }
 }
