@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is a part of SebkSmallUserBundle
- * Copyright 2015-2018 - Sébastien Kus
+ * Copyright 2015-2022 - Sébastien Kus
  * Under GNU GPL V3 licence
  */
 
@@ -14,11 +14,17 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * Class AbstractUserApiController
+ * Class UserApiController
  * @package Sebk\SmallUserBundle\Controller
  */
-abstract class UserApiController extends AbstractController
+class UserApiController extends AbstractController
 {
+    /**
+     * @Route("/api/login_check", methods={"POST"})
+     * @return void
+     */
+    protected function loginCheck() {}
+
     /**
      * Get user
      * @Route("/api/user/{id}", methods={"GET"})

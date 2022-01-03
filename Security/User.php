@@ -2,7 +2,7 @@
 
 /**
  * This file is a part of SebkSmallUserBundle
- * Copyright 2015-2018 - Sébastien Kus
+ * Copyright 2015-2022 - Sébastien Kus
  * Under GNU GPL V3 licence
  */
 
