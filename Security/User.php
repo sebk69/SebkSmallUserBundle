@@ -9,16 +9,15 @@
 namespace Sebk\SmallUserBundle\Security;
 
 
-use Symfony\Component\Security\Core\User\AdvancedUserInterface;
-use Symfony\Component\Security\Core\User\EquatableInterface;
 use Sebk\SmallUserBundle\Model\User as UserModel;
+use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Class User
  * @package Sebk\SmallUserBundle\Security
  */
-class User implements AdvancedUserInterface, EquatableInterface
+class User implements UserInterface, EquatableInterface
 {
     protected $id;
     protected $email;

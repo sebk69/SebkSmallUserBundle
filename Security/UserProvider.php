@@ -8,15 +8,20 @@
 
 namespace Sebk\SmallUserBundle\Security;
 
-use Sebk\SmallOrmBundle\Dao\DaoEmptyException;
+use Sebk\SmallOrmCore\Dao\DaoEmptyException;
+use Sebk\SmallOrmCore\Dao\Model;
+use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
-use Sebk\SmallOrmBundle\Factory\Dao;
-use Sebk\SmallOrmBundle\Factory\Validator;
-use Sebk\SmallOrmBundle\Dao\DaoException;
+use Sebk\SmallOrmCore\Factory\Dao;
+use Sebk\SmallOrmCore\Factory\Validator;
+use Sebk\SmallOrmCore\Dao\DaoException;
 use Sebk\SmallUserBundle\Model\User as UserModel;
 use Sebk\SmallUserBundle\Dao\User as UserDao;
 
@@ -24,32 +29,27 @@ use Sebk\SmallUserBundle\Dao\User as UserDao;
  * Class UserProvider
  * @package Sebk\SmallUserBundle\Security
  */
-class UserProvider implements UserProviderInterface
+class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
 {
 
-    protected $daoFactory;
-    protected $validatorFactory;
-    protected $encoderFactory;
+    protected Dao $daoFactory;
+    protected Validator $validatorFactory;
+    protected UserPasswordHasher $encoderFactory;
 
     /**
      * UserProvider constructor.
      * @param Dao $daoFactory
      * @param Validator $validatorFactory
-     * @param EncoderFactoryInterface $encoderFactory
+     * @param UserPasswordHasherInterface $encoderFactory
      */
-    public function __construct(Dao $daoFactory, Validator $validatorFactory, EncoderFactoryInterface $encoderFactory) {
+    public function __construct(Dao $daoFactory, Validator $validatorFactory, UserPasswordHasherInterface $encoderFactory)
+    {
         $this->daoFactory = $daoFactory;
         $this->validatorFactory = $validatorFactory;
         $this->encoderFactory = $encoderFactory;
     }
 
-    /**
-     * Return the user dao
-     * @return UserDao
-     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
-     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
-     */
-    public function getUserDao(): UserDao
+    public function getUserDao()
     {
         return $this->daoFactory->get("SebkSmallUserBundle", "User");
     }
@@ -57,12 +57,12 @@ class UserProvider implements UserProviderInterface
     /**
      * Load user by email or nickname
      * @param string $username
-     * @return User|UserInterface
+     * @return User
      * @throws DaoException
-     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
-     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
-    public function loadUserByUsername($username)
+    public function loadUserByUsername(string $username): User
     {
         // Get model from db
         $model = $this->getModelByUsername($username);
@@ -78,12 +78,13 @@ class UserProvider implements UserProviderInterface
     /**
      * Load user by id
      * @param $userId
+     * @param int $userId
      * @return User
      * @throws DaoException
-     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
-     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
-    public function loadUserById($userId)
+    public function loadUserById(int $userId): User
     {
         // Get model from db
         $model = $this->getModelById($userId);
@@ -101,8 +102,8 @@ class UserProvider implements UserProviderInterface
      * @param string $username
      * @return UserModel
      * @throws DaoException
-     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
-     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
     public function getModelByUsername(string $username): UserModel
     {
@@ -124,8 +125,8 @@ class UserProvider implements UserProviderInterface
      * @param int $userId
      * @return UserModel
      * @throws DaoException
-     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
-     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
     public function getModelById(int $userId): UserModel
     {
@@ -143,6 +144,8 @@ class UserProvider implements UserProviderInterface
      * @param User $user
      * @return UserModel
      * @throws DaoException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
     public function getModelByUser(User $user): UserModel
     {
@@ -154,6 +157,8 @@ class UserProvider implements UserProviderInterface
      * @param UserInterface $user
      * @return User
      * @throws DaoException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
     public function refreshUser(UserInterface $user): User
     {
@@ -169,27 +174,28 @@ class UserProvider implements UserProviderInterface
      * @param string $class
      * @return bool
      */
-    public function supportsClass($class)
+    public function supportsClass(string $class): bool
     {
         return $class === 'Sebk\SmallUserBundle\Security\User';
     }
 
     /**
      * Create user
-     * @param $email
-     * @param $nickname
-     * @param $plainPassword
-     * @param $enabled
-     * @return UserProvider
-     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
-     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
+     * @param string $email
+     * @param string $nickname
+     * @param string $plainPassword
+     * @param bool $enabled
+     * @return $this
+     * @throws \ReflectionException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
-    public function createUser($email, $nickname, $plainPassword, $enabled = true): UserProvider
+    public function createUser(string $email, string $nickname, string $plainPassword, bool $enabled = true): UserProvider
     {
         $user = new User;
 
         $user->setSalt(md5(time()));
-        $user->setPassword($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $user->getSalt()));
+        $user->setPassword($this->encoderFactory->hashPassword($user, $plainPassword));
         $user->setEmail($email);
         $user->setNickname($nickname);
         $user->setEnabled($enabled);
@@ -218,13 +224,12 @@ class UserProvider implements UserProviderInterface
     public function updateUser(User $user, string $plainPassword = null): UserProvider
     {
         if($plainPassword !== null) {
-            $userModel = $this->getModelById($user->getId());
             // Change password
-            $user->setPassword($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $userModel->getSalt()));
+            $user->setPassword($this->encoderFactory->hashPassword($user, $plainPassword));
         } else {
             // Or not persist for security
-            $user->setPassword(UserModel::FIELD_NOT_PERSIST);
-            $user->setSalt(UserModel::FIELD_NOT_PERSIST);
+            $user->setPassword(Model::FIELD_NOT_PERSIST);
+            $user->setSalt(Model::FIELD_NOT_PERSIST);
         }
 
         $model = $this->getModelById($user->getId());
@@ -256,13 +261,13 @@ class UserProvider implements UserProviderInterface
 
     /**
      * Check if password match user password
-     * @param $user
-     * @param $plainPassword
+     * @param User $user
+     * @param string $plainPassword
      * @return bool
      */
-    public function checkPassword(User $user, string $plainPassword)
+    public function checkPassword(User $user, string $plainPassword): bool
     {
-        if($this->encoderFactory->getEncoder($user)->encodePassword($plainPassword, $user->getSalt()) == $user->getPassword()) {
+        if($this->encoderFactory->isPasswordValid($user, $plainPassword)) {
             return true;
         }
 

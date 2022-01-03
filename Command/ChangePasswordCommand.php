@@ -8,19 +8,36 @@
 namespace Sebk\SmallUserBundle\Command;
 
 use Sebk\SmallUserBundle\Security\UserProvider;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ChangePasswordCommand extends ContainerAwareCommand
+class ChangePasswordCommand extends Command
 {
 
+    protected static $defaultName = 'sebk:small-user:change-password';
+
+    protected UserProvider $userProvider;
+
+    /**
+     * Constructor
+     * @param UserProvider $userProvider
+     */
+    public function __construct(UserProvider $userProvider)
+    {
+        $this->userProvider = $userProvider;
+
+        parent::__construct();
+    }
+
+    /**
+     * Configure command
+     * @return void
+     */
     protected function configure()
     {
         $this
-            ->setName('sebk:small-user:change-password')
             ->setDescription('Change password of user')
             ->addArgument(
                 'username',
@@ -37,17 +54,15 @@ class ChangePasswordCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /** @var UserProvider $userProvider */
-        $userProvider = $this->getContainer()->get("sebk_small_user_provider");
-
         try {
-            $user = $userProvider->loadUserByUsername($input->getArgument("username"));
-            $userProvider->updateUser($user, $input->getArgument("password"));
+            $user = $this->userProvider->loadUserByUsername($input->getArgument("username"));
+            $this->userProvider->updateUser($user, $input->getArgument("password"));
         } catch(\Exception $e) {
             $output->writeln($e->getMessage());
-            return;
+            return self::FAILURE;
         }
 
         $output->writeln("User ".$input->getArgument("username")." has been updated");
+        return self::SUCCESS;
     }
 }

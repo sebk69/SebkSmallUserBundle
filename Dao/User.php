@@ -7,9 +7,8 @@
 
 namespace Sebk\SmallUserBundle\Dao;
 
-use Sebk\SmallOrmBundle\Dao\AbstractDao;
-use Sebk\SmallOrmBundle\Dao\Field;
-use \Sebk\SmallOrmBundle\QueryBuilder\QueryBuilder;
+use Sebk\SmallOrmCore\Dao\AbstractDao;
+use Sebk\SmallOrmCore\Dao\Field;
 
 class User extends AbstractDao
 {
@@ -18,13 +17,13 @@ class User extends AbstractDao
         $this->setDbTableName("user");
         $this->setModelName("User");
         $this->addPrimaryKey("id", "id");
-        $this->addField("email", "email");
+        $this->addField("email", "email", null, Field::TYPE_PHP_FILTER, FILTER_VALIDATE_EMAIL);
         $this->addField("password", "password");
         $this->addField("nickname", "nickname");
         $this->addField("salt", "salt");
-        $this->addField("enabled", "enabled", 0, Field::TYPE_BOOLEAN);
-        $this->addField("created_at", "createdAt", (new \DateTime())->format("Y-m-d H:i:s"), Field::TYPE_DATETIME);
+        $this->addField("enabled", "enabled", false, Field::TYPE_BOOLEAN);
+        $this->addField("created_at", "createdAt", null, Field::TYPE_DATETIME);
         $this->addField("updated_at", "updatedAt", null, Field::TYPE_DATETIME);
-        $this->addField("roles", "roles", json_encode([]));
+        $this->addField("roles", "roles", [], Field::TYPE_JSON);
     }
 }

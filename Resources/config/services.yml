@@ -1,32 +1,15 @@
 services:
     _defaults:
         public: true
+        autowire: true
+        autoconfigure: true
     sebk_small_user_provider:
         class: Sebk\SmallUserBundle\Security\UserProvider
-        arguments: ["@sebk_small_orm_dao", "@sebk_small_orm_validator", "@security.encoder_factory"]
     Sebk\SmallUserBundle\Security\UserProvider:
-        arguments: ["@sebk_small_orm_dao", "@sebk_small_orm_validator", "@security.encoder_factory"]
-    sebk_small_user_invite:
-        class: Sebk\SmallUserBundle\Security\Invite
-        arguments: ["@swiftmailer.mailer", "%env(APP_SECRET)%"]
-    Sebk\SmallUserBundle\Command\CreateUserCommand:
-        public: true
-        tags: [console.command]
-    Sebk\SmallUserBundle\Command\ChangePasswordCommand:
-        public: true
-        tags: [console.command]
-    Sebk\SmallUserBundle\Command\AddRoleCommand:
-        public: true
-        tags: [console.command]
-    Sebk\SmallUserBundle\Command\RemoveRoleCommand:
-        public: true
-        tags: [console.command]
-    Sebk\SmallUserBundle\Command\EnableUserCommand:
-        public: true
-        tags: [console.command]
-    Sebk\SmallUserBundle\Command\DisableUserCommand:
-        public: true
-        tags: [console.command]
-    Sebk\SmallUserBundle\Security\UserVoter:
-        public: true
-        tags: [security.voter]
+        alias: sebk_small_user_provider
+    Sebk\SmallUserBundle\Command\:
+        resource: '../../Command/*'
+        tags: [ console.command ]
+    Sebk\SmallUserBundle\Controller\:
+        resource: '../../Controller/*'
+        tags: [ controller.service_arguments ]

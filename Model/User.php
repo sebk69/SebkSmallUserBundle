@@ -2,11 +2,7 @@
 
 namespace Sebk\SmallUserBundle\Model;
 
-use Sebk\SmallOrmBundle\Dao\ModelException;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\User\EquatableInterface;
-use Sebk\SmallOrmBundle\Dao\Model;
-use Symfony\Component\Validator\Constraints\DateTime;
+use Sebk\SmallOrmCore\Dao\Model;
 use Sebk\SmallUserBundle\Security\User as SecurityTokenUser;
 
 /**
@@ -32,34 +28,14 @@ use Sebk\SmallUserBundle\Security\User as SecurityTokenUser;
 class User extends Model
 {
     /**
-     * Action after loading model
-     */
-    public function onLoad(): void
-    {
-        // Convert database to model fields types
-        $this->setRoles(json_decode($this->getRoles()));
-    }
-
-    /**
      * Action before saving model
      */
     public function beforeSave(): void
     {
-        // Convert model to database fields types
-        $this->setRoles(json_encode($this->getRoles()));
         if($this->getCreatedAt() === null) {
             $this->setCreatedAt(new \DateTime);
         }
         $this->setUpdatedAt(new \DateTime);
-    }
-
-    /**
-     * Action after saving model
-     */
-    public function afterSave(): void
-    {
-        // Convert database to model fields types
-        $this->setRoles(json_decode($this->getRoles()));
     }
 
     /**
@@ -104,11 +80,12 @@ class User extends Model
     public function jsonSerialize()
     {
         $password = $this->getPassword();
+        $salt = $this->getSalt();
         $this->setPassword(Model::FIELD_NOT_PERSIST);
         $this->setSalt(Model::FIELD_NOT_PERSIST);
         $result = parent::jsonSerialize();
         $this->setPassword($password);
-        $this->setSalt($password);
+        $this->setSalt($salt);
 
         return $result;
     }

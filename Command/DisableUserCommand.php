@@ -7,19 +7,37 @@
 
 namespace Sebk\SmallUserBundle\Command;
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Sebk\SmallUserBundle\Security\UserProvider;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DisableUserCommand extends ContainerAwareCommand
+class DisableUserCommand extends Command
 {
 
+    protected static $defaultName = 'sebk:small-user:disable';
+
+    protected UserProvider $userProvider;
+
+    /**
+     * Constructor
+     * @param UserProvider $userProvider
+     */
+    public function __construct(UserProvider $userProvider)
+    {
+        $this->userProvider = $userProvider;
+
+        parent::__construct();
+    }
+
+    /**
+     * Configure command
+     * @return void
+     */
     protected function configure()
     {
         $this
-            ->setName('sebk:small-user:disable')
             ->setDescription('Disable a user')
             ->addArgument(
                 'username',
@@ -31,17 +49,16 @@ class DisableUserCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $userProvider = $this->getContainer()->get("sebk_small_user_provider");
-
         try {
-            $user = $userProvider->loadUserByUsername($input->getArgument("username"));
+            $user = $this->userProvider->loadUserByUsername($input->getArgument("username"));
             $user->setEnabled(false);
-            $userProvider->updateUser($user);
+            $this->userProvider->updateUser($user);
         } catch(\Exception $e) {
             $output->writeln($e->getMessage());
-            return;
+            return self::FAILURE;
         }
 
         $output->writeln("User ".$input->getArgument("username")." has been updated");
+        return self::SUCCESS;
     }
 }

@@ -7,19 +7,37 @@
 
 namespace Sebk\SmallUserBundle\Command;
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Sebk\SmallUserBundle\Security\UserProvider;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class CreateUserCommand extends ContainerAwareCommand
+class CreateUserCommand extends Command
 {
 
+    protected static $defaultName = 'sebk:small-user:create-user';
+
+    protected UserProvider $userProvider;
+
+    /**
+     * Constructor
+     * @param UserProvider $userProvider
+     */
+    public function __construct(UserProvider $userProvider)
+    {
+        $this->userProvider = $userProvider;
+
+        parent::__construct();
+    }
+
+    /**
+     * Configure command
+     * @return void
+     */
     protected function configure()
     {
         $this
-            ->setName('sebk:small-user:create-user')
             ->setDescription('Create a user')
             ->addArgument(
                 'email',
@@ -41,15 +59,14 @@ class CreateUserCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $userProvider = $this->getContainer()->get("sebk_small_user_provider");
-
         try {
-            $user = $userProvider->createUser($input->getArgument("email"), $input->getArgument("nickname"), $input->getArgument("password"));
+            $this->userProvider->createUser($input->getArgument("email"), $input->getArgument("nickname"), $input->getArgument("password"));
         } catch(\Exception $e) {
             $output->writeln($e->getMessage());
-            return;
+            return self::FAILURE;
         }
 
         $output->writeln("User ".$input->getArgument("nickname")." has been created");
+        return self::SUCCESS;
     }
 }

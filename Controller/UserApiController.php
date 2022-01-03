@@ -8,42 +8,28 @@
 namespace Sebk\SmallUserBundle\Controller;
 
 
-use Sebk\SmallOrmBundle\Dao\AbstractDao;
-use Sebk\SmallOrmBundle\Factory\Dao;
-use Sebk\SmallUserBundle\Model\User;
-use Sebk\SmallUserBundle\Security\UserProvider;
-use Sebk\SmallUserBundle\Security\UserVoter;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\Form\Form;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Sebk\SmallOrmCore\Factory\Dao;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * Class AbstractUserApiController
  * @package Sebk\SmallUserBundle\Controller
  */
-abstract class AbstractUserApiController extends Controller
+abstract class UserApiController extends AbstractController
 {
     /**
-     * Get user DAO
-     * @return AbstractDao
-     */
-    abstract protected function getUserDao(): AbstractDao;
-
-    /**
      * Get user
-     * @param int|null $id
-     * @param Request $request
-     * @return Response
+     * @Route("/api/user/{id}", methods={"GET"})
+     * @param int $id
+     * @param Dao $daoFactory
+     * @return Response|JsonResponse
      */
-    protected function getUserById(?int $id, Request $request)
+    protected function getUserById(int $id, Dao $daoFactory)
     {
         try {
-            if ($id === null) {
-                $user = $this->getUserDao()->findOneBy(["id" => $this->getUser()->getId()]);
-            } else {
-                $user = $this->getUserDao()->findOneBy(["id" => $id]);
-            }
+            $user = $daoFactory->get("SebkSmallUserBundle", "User")->findOneBy(["id" => $id]);
         } catch (\Exception $e) {
             return new Response("User not found", Response::HTTP_NOT_FOUND);
         }
@@ -54,10 +40,7 @@ abstract class AbstractUserApiController extends Controller
             return new Response("Not authorized", Response::HTTP_UNAUTHORIZED);
         }
 
-        $response = new Response(json_encode($user));
-        $response->headers->set("Content-Type", "application/json");
-
-        return $response;
+        return new JsonResponse($user);
     }
 
     /**

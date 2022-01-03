@@ -7,8 +7,9 @@
 
 namespace Sebk\SmallUserBundle\Validator;
 
-use Sebk\SmallOrmBundle\Validator\AbstractValidator;
-use Sebk\SmallOrmBundle\Dao\ModelException;
+use Sebk\SmallOrmCore\Validator\AbstractValidator;
+use Sebk\SmallOrmForms\Message\Message;
+use Sebk\SmallOrmForms\Message\MessageCollection;
 
 class User extends AbstractValidator
 {
@@ -19,36 +20,30 @@ class User extends AbstractValidator
      */
     public function validate()
     {
-        $message = "";
+        $message = new MessageCollection();
         $result  = true;
 
-        if(!$this->testNonEmpty("email")) {
-            $message .= "The email is mandatory\n";
-            $result = false;
-        }
-
         if(!$this->testUnique("email")) {
-            $message .= "This email has been already been registered\n";
+            $message[] = new Message(Message::BLANK_TEMPLATE, ["Email already taken"]);
             $result = false;
         }
 
-        if(!$this->testNonEmpty("nickname")) {
-            $message .= "The nickname is mandatory\n";
+        if(!$this->testNonEmpty("email")) {
+            $message[] = new Message(Message::BLANK_TEMPLATE, ["Email must be filled"]);
             $result = false;
         }
 
         if(!$this->testUnique("nickname")) {
-            $message .= "This nickname has been already been registered\n";
+            $message[] = new Message(Message::BLANK_TEMPLATE, ["Nickname already taken"]);
             $result = false;
         }
 
-        if (filter_var($this->model->getEmail(), FILTER_VALIDATE_EMAIL) === false) {
-            $message .= "Email format is not valid\n";
+        if(!$this->testNonEmpty("nickname")) {
+            $message[] = new Message(Message::BLANK_TEMPLATE, ["Nickname must be filled"]);
             $result = false;
         }
 
         $this->message = $message;
-
         return $result;
     }
 }
