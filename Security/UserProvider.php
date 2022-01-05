@@ -11,6 +11,7 @@ namespace Sebk\SmallUserBundle\Security;
 use Sebk\SmallOrmCore\Dao\DaoEmptyException;
 use Sebk\SmallOrmCore\Dao\Model;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -70,6 +71,10 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
         // Create security user
         $user = (new User())->setFromModel($model);
         $user->setPassword($model->getPassword());
+
+        if (!$user->getEnabled()) {
+            throw new AccessDeniedHttpException("Disabled !");
+        }
 
         // Return it
         return $user;
@@ -131,7 +136,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
     public function getModelById(int $userId): UserModel
     {
         try {
-            $user = $this->getUserDao()->findOneBy(array("id" => $userId));
+            $user = $this->getUserDao()->findOneBy(["id" => $userId]);
         } catch (DaoEmptyException $e) {
             throw new UsernameNotFoundException("User id $userId does not exist.");
         }
@@ -267,6 +272,10 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
      */
     public function checkPassword(User $user, string $plainPassword): bool
     {
+        if (!$user->getEnabled()) {
+            return false;
+        }
+
         if($this->encoderFactory->isPasswordValid($user, $plainPassword)) {
             return true;
         }

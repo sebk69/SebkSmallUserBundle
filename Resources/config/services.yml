@@ -7,6 +7,8 @@ services:
         class: Sebk\SmallUserBundle\Security\UserProvider
     Sebk\SmallUserBundle\Security\UserProvider:
         alias: sebk_small_user_provider
+    Sebk\SmallUserBundle\Security\UserVoter:
+        tags: [ security.voter ]
     Sebk\SmallUserBundle\Command\:
         resource: '../../Command/*'
         tags: [ console.command ]

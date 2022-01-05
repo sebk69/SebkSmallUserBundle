@@ -7,7 +7,6 @@
 
 namespace Sebk\SmallUserBundle\Security;
 
-use Sebk\SmallUserBundle\Security\User;
 use Sebk\SmallUserBundle\Model\User as UserModel;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
@@ -56,7 +55,7 @@ class UserVoter extends Voter
                 break;
 
             case static::PERSONAL_EDIT:
-                if ($loggedUser->getId() == $subject->getId() || $loggedUser->hasRole("ROLE_ADMIN")) {
+                if ($loggedUser->getId() == $subject->getId()) {
                     return true;
                 }
                 break;

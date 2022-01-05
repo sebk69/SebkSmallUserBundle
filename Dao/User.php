@@ -19,8 +19,8 @@ class User extends AbstractDao
         $this->addPrimaryKey("id", "id");
         $this->addField("email", "email", null, Field::TYPE_PHP_FILTER, FILTER_VALIDATE_EMAIL);
         $this->addField("password", "password");
-        $this->addField("nickname", "nickname");
         $this->addField("salt", "salt");
+        $this->addField("nickname", "nickname");
         $this->addField("enabled", "enabled", false, Field::TYPE_BOOLEAN);
         $this->addField("created_at", "createdAt", null, Field::TYPE_DATETIME);
         $this->addField("updated_at", "updatedAt", null, Field::TYPE_DATETIME);

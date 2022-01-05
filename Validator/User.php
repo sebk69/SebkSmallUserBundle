@@ -28,18 +28,8 @@ class User extends AbstractValidator
             $result = false;
         }
 
-        if(!$this->testNonEmpty("email")) {
-            $message[] = new Message(Message::BLANK_TEMPLATE, ["Email must be filled"]);
-            $result = false;
-        }
-
         if(!$this->testUnique("nickname")) {
             $message[] = new Message(Message::BLANK_TEMPLATE, ["Nickname already taken"]);
-            $result = false;
-        }
-
-        if(!$this->testNonEmpty("nickname")) {
-            $message[] = new Message(Message::BLANK_TEMPLATE, ["Nickname must be filled"]);
             $result = false;
         }
 

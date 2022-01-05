@@ -8,9 +8,18 @@
 namespace Sebk\SmallUserBundle\Controller;
 
 
+use Sebk\SmallOrmCore\Dao\Model;
 use Sebk\SmallOrmCore\Factory\Dao;
+use Sebk\SmallOrmForms\Form\FormModel;
+use Sebk\SmallOrmForms\Message\Message;
+use Sebk\SmallOrmForms\Message\MessageCollection;
+use Sebk\SmallUserBundle\Security\User;
+use Sebk\SmallUserBundle\Security\UserProvider;
+use Sebk\SmallUserBundle\Security\UserVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -19,6 +28,7 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class UserApiController extends AbstractController
 {
+
     /**
      * @Route("/api/login_check", methods={"POST"})
      * @return void
@@ -26,97 +36,170 @@ class UserApiController extends AbstractController
     protected function loginCheck() {}
 
     /**
-     * Get user
-     * @Route("/api/user/{id}", methods={"GET"})
+     * @Route("/api/users/myself", methods={"GET"})
+     * @param Dao $daoFactory
+     * @return JsonResponse
+     * @throws \ReflectionException
+     * @throws \Sebk\SmallOrmCore\Dao\DaoEmptyException
+     * @throws \Sebk\SmallOrmCore\Dao\DaoException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
+     */
+    public function getMyself(Dao $daoFactory): Response
+    {
+        try {
+            $model = $daoFactory->get('SebkSmallUserBundle', 'User')->findOneBy(['id' => $this->getUser()->getId()]);
+        } catch(\Exception $e) {
+            return new Response('Forbidden !', Response::HTTP_UNAUTHORIZED);
+        }
+
+        return new JsonResponse($model);
+    }
+
+    /**
+     * @Route("/api/users/{id}", methods={"GET"})
      * @param int $id
      * @param Dao $daoFactory
      * @return Response|JsonResponse
      */
-    protected function getUserById(int $id, Dao $daoFactory)
+    public function getUserById(int $id, Dao $daoFactory): Response
     {
         try {
-            $user = $daoFactory->get("SebkSmallUserBundle", "User")->findOneBy(["id" => $id]);
+            $user = $daoFactory->get('SebkSmallUserBundle', 'User')->findOneBy(['id' => $id]);
         } catch (\Exception $e) {
-            return new Response("User not found", Response::HTTP_NOT_FOUND);
+            return new Response('User not found', Response::HTTP_NOT_FOUND);
         }
 
         try {
             $this->denyAccessUnlessGranted(UserVoter::READ, $user);
         } catch (\Exception $e) {
-            return new Response("Not authorized", Response::HTTP_UNAUTHORIZED);
+            return new Response('Not authorized', Response::HTTP_UNAUTHORIZED);
         }
 
         return new JsonResponse($user);
     }
 
     /**
-     * Update a user
+     * @Route("/api/users/{id}", methods={"PATCH"})
+     * @param int $id
      * @param UserProvider $userProvider
      * @param Request $request
      * @return Response
-     * @throws \Exception
+     * @throws \Sebk\SmallOrmCore\Dao\DaoException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
+     * @throws \Sebk\SmallOrmForms\Form\FieldException
+     * @throws \Sebk\SmallOrmForms\Form\FieldNotFoundException
+     * @throws \Sebk\SmallOrmForms\Type\TypeNotFoundException
      */
-    protected function putUser(UserProvider $userProvider, Request $request)
+    public function patchUser(int $id, UserProvider $userProvider, Request $request): Response
     {
-        // Decode body
-        $userStdClass = json_decode($request->getContent());
-        // Security : don't persist salt and password by default
-        $userStdClass->salt = User::FIELD_NOT_PERSIST;
-        $userStdClass->password = User::FIELD_NOT_PERSIST;
-        // Create model
-        $userModel = $this->getUserDao()->makeModelFromStdClass($userStdClass);
+        // Get data
+        $data = json_decode($request->getContent(), true);
 
-        $plainPassword = null;
-        if (!empty($userModel->getPlainPassword())) {
-            if ($userModel->getPlainPassword() != $userModel->getPlainPasswordConfirm()) {
-                return new Response("Password and confirmation don't match", Response::HTTP_BAD_REQUEST);
-            }
-            $plainPassword = $userModel->getPlainPassword();
-        }
+        // Don't touch to password and salt
+        $data['password'] = Model::FIELD_NOT_PERSIST;
+        $data['salt'] = Model::FIELD_NOT_PERSIST;
 
+        // Load user
+        $model = $userProvider->getModelById($id);
+
+        // Check rights
         try {
-            $this->denyAccessUnlessGranted(UserVoter::PERSONAL_EDIT, $userModel);
+            $this->denyAccessUnlessGranted(UserVoter::PERSONAL_EDIT, $model);
         } catch (\Exception $e) {
-            return new Response("Not authorized ".$e->getMessage(), Response::HTTP_UNAUTHORIZED);
+            return new Response('Not authorized '.$e->getMessage(), Response::HTTP_UNAUTHORIZED);
         }
 
-        $userProvider->updateUserFromModel($userModel, $plainPassword);
+        // Fill form
+        $form = (new FormModel())
+            ->fillFromModel($model)
+            ->setFieldMandatory('email')
+            ->setFieldMandatory('nickname')
+            ->fillFromArray($data);
 
-        $response = new Response(json_encode($userModel));
-        $response->headers->set("Content-Type", "application/json");
+        // Get updated model
+        /** @var \Sebk\SmallUserBundle\Model\User $model */
+        $model = $form->fillModel();
 
-        return $response;
+        // Check form
+        $messages = $form->validate();
+        if (count($messages) > 0) {
+            return new JsonResponse($messages, Response::HTTP_BAD_REQUEST);
+        }
+
+        // Don't persist administratives fields
+        $model->setCreatedAt(Model::FIELD_NOT_PERSIST);
+        $model->setPassword(Model::FIELD_NOT_PERSIST);
+        $model->setSalt(Model::FIELD_NOT_PERSIST);
+        $model->setRoles(Model::FIELD_NOT_PERSIST);
+        $model->setEnabled(Model::FIELD_NOT_PERSIST);
+
+        // Update user
+        $model->persist();
+
+        // Return updated model
+        return new JsonResponse($userProvider->getModelById($id));
     }
 
     /**
-     * Check password valid for current user
+     * @Route("/api/users/{id}/password", methods={"PATCH"})
+     * @param int $id
      * @param UserProvider $userProvider
      * @param Request $request
      * @return Response
+     * @throws \Sebk\SmallOrmCore\Dao\DaoException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
-    protected function checkPassword(UserProvider $userProvider, Request $request)
+    public function editUserPassword(int $id, UserProvider $userProvider, Request $request): Response
     {
-        // decode body
-        $password = json_decode($request->getContent())->password;
+        // Get data
+        $data = json_decode($request->getContent(), true);
 
-        // check password
-        if($userProvider->checkPassword($this->getUser(), $password)) {
-            // password ok
-            return new Response("");
-        } else {
-            // wrong password
-            return new Response("", Response::HTTP_UNAUTHORIZED);
+        // Check rights
+        $user = $userProvider->getModelById($id);
+        try {
+            $this->denyAccessUnlessGranted(UserVoter::PERSONAL_EDIT, $user);
+        } catch (\Exception $e) {
+            return new Response('Not authorized '.$e->getMessage(), Response::HTTP_UNAUTHORIZED);
         }
+
+        // Init messages
+        $messages = new MessageCollection();
+
+        // Check old password
+        if (!$userProvider->checkPassword($this->getUser(), $data['oldPassword'])) {
+            $messages[] = new Message(Message::BLANK_TEMPLATE, ['The old password is wrong']);
+        }
+
+        // Check password length
+        if (strlen($data["newPassword"]) < 8) {
+            $messages[] = new Message(Message::BLANK_TEMPLATE, ['The password length must more 8 chars or more']);
+        }
+
+        if (count($messages) > 0) {
+            return new JsonResponse($messages, Response::HTTP_BAD_REQUEST);
+        }
+
+        // Update user
+        $userProvider->updateUser($this->getUser(), $data['newPassword']);
+
+        return new JsonResponse(true);
     }
 
     /**
-     * List users
+     * @route("/api/users", methods={"GET"})
+     * @param Dao $daoFactory
      * @param Request $request
      * @return Response
+     * @throws \ReflectionException
+     * @throws \Sebk\SmallOrmCore\Factory\ConfigurationException
+     * @throws \Sebk\SmallOrmCore\Factory\DaoNotFoundException
      */
-    protected function listUsers(Request $request) {
+    public function listUsers(Dao $daoFactory, Request $request) {
         // Get users
-        $users = $this->getUserDao()->findBy([]);
+        $users = $daoFactory->get('SebkSmallUserBundle', 'User')->findBy([]);
 
         // Hide not allowed users
         foreach ($users as $i => $user) {
@@ -132,35 +215,18 @@ class UserApiController extends AbstractController
     }
 
     /**
-     * Create a user
+     * @Route("/api/users/{id}/enabled/{enabled}", methods={"PATCH"})
      * @param UserProvider $userProvider
-     * @param Request $request
      * @return Response
-     * @throws \Sebk\SmallOrmBundle\Dao\DaoException
-     * @throws \Sebk\SmallOrmBundle\Factory\ConfigurationException
-     * @throws \Sebk\SmallOrmBundle\Factory\DaoNotFoundException
      */
-    protected function createUser(UserProvider $userProvider, Request $request) {
-        // Check rigths
-        /** @var User $myUser */
-        $myUser = $this->getUser();
-        if(!$myUser->hasRole("ROLE_ADMIN")) {
-            return new Response("Access denied", 400);
-        }
+    public function toggleEnabled(int $id, int $enabled, Dao $daoFactory): Response
+    {
+        /** @var \Sebk\SmallUserBundle\Model\User $user */
+        $user = $daoFactory->get("SebkSmallUserBundle", "User")->findOneBy(["id" => $id]);
+        $user->setEnabled($enabled == 1);
+        $user->persist();
 
-        // Get data
-        $data = json_decode($request->getContent(), true);
-
-        // Create user
-        try {
-            $userProvider->createUser($data["email"], $data["nickname"], $data["password"]);
-        } catch (\Exception $e) {
-            return new Response($e->getMessage(), 400);
-        }
-
-        // Return created user
-        $user = $userProvider->getModelByUsername($data["nickname"]);
-
-        return new Response(json_encode($user));
+        return new JsonResponse($user);
     }
+
 }

@@ -139,7 +139,7 @@ class User implements UserInterface, EquatableInterface
     public function setPassword(string $password): User
     {
         $this->password = $password;
-        
+
         return $this;
     }
 
