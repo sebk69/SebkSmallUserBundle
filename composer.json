@@ -9,6 +9,6 @@
     "require": {
         "sebk/small-orm-bundle": ">=2.4",
         "sebk/small-orm-core": ">=1.9.2",
-        "sebk/small-orm-forms": ">=1.9.2"
+        "sebk/small-orm-forms": ">=1.5"
     }
 }
