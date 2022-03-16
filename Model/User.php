@@ -77,7 +77,7 @@ class User extends Model
      * Custom json serialize to convert dates and unset password
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $password = $this->getPassword();
         $salt = $this->getSalt();
