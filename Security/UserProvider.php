@@ -72,7 +72,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
         $user = (new User())->setFromModel($model);
         $user->setPassword($model->getPassword());
 
-        if (!$user->getEnabled()) {
+        if (!$user->getEnabled() && PHP_SAPI != 'cli') {
             throw new AccessDeniedHttpException("Disabled !");
         }
 
